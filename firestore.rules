@@ -74,23 +74,32 @@ service cloud.firestore {
       allow write: if isAdmin() || isCoach();
     }
     // WOD 기록 공유
-    match /wodRecords/{recordId} {
-      allow read: if isApproved();
+    
+match /wodRecords/{recordId} {
+  allow read: if isApproved();
 
-      allow create: if isApproved()
-        && request.resource.data.userId == request.auth.uid
-        && request.resource.data.keys().hasAll([
-          'userId', 'createdAt'
-        ]);
+  allow create: if isApproved()
+    && request.resource.data.uid == request.auth.uid
+    && request.resource.data.keys().hasOnly([
+      'uid', 'date', 'name', 'section1',
+      'section2', 'createdAt', 'updatedAt'
+    ])
+    && request.resource.data.keys().hasAll([
+      'uid', 'date', 'name', 'section1',
+      'section2', 'createdAt', 'updatedAt'
+    ]);
 
-      allow update: if isApproved()
-        && resource.data.userId == request.auth.uid
-        && request.resource.data.userId == resource.data.userId
-        && request.resource.data.createdAt == resource.data.createdAt;
+  allow update: if isApproved()
+    && resource.data.uid == request.auth.uid
+    && request.resource.data.uid == resource.data.uid
+    && request.resource.data.diff(resource.data)
+      .affectedKeys().hasOnly([
+        'section1', 'section2', 'updatedAt'
+      ]);
 
-      allow delete: if isApproved()
-        && resource.data.userId == request.auth.uid;
-    }
+  allow delete: if isApproved()
+    && resource.data.uid == request.auth.uid;
+}
     match /{document=**} {
       allow read, write: if false;
     }
