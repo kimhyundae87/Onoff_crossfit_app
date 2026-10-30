@@ -73,7 +73,24 @@ service cloud.firestore {
       allow read: if isApproved();
       allow write: if isAdmin() || isCoach();
     }
+    // WOD 기록 공유
+    match /wodRecords/{recordId} {
+      allow read: if isApproved();
 
+      allow create: if isApproved()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.keys().hasAll([
+          'userId', 'createdAt'
+        ]);
+
+      allow update: if isApproved()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.createdAt == resource.data.createdAt;
+
+      allow delete: if isApproved()
+        && resource.data.userId == request.auth.uid;
+    }
     match /{document=**} {
       allow read, write: if false;
     }
